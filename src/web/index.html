@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Montserrat", sans-serif;
+      user-select: none;
+    }
+
+    html,
+    body,
+    #app {
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+    }
+
+    #app {
+      background-color: #313338;
+      color: whitesmoke;
+      border-radius: 16px;
+    }
+
+    .drag-bar {
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+
+      -webkit-app-region: drag;
+
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .icon {
+          width: 32px;
+          height: 32px;
+        }
+
+        .text {
+          font-size: 24px;
+          font-weight: 600;
+        }
+      }
+
+      .close {
+        display: flex;
+
+        -webkit-app-region: no-drag;
+
+        button {
+          background-color: transparent;
+          border: none;
+          display: flex;
+          padding: 4px;
+          border-radius: 50%;
+          cursor: pointer;
+
+          svg {
+            width: 24px;
+            height: 24px;
+            color: rgba(255, 255, 255, 0.8);
+          }
+
+          &:hover {
+            background-color: rgba(255, 0, 0, 0.1);
+          }
+        }
+      }
+    }
+
+    .app-content {
+      padding: 16px;
+
+      .general-top {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+
+        .discord-installs {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          position: relative;
+          width: 210px;
+          min-width: 210px;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 8px;
+
+          .title {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+            background-color: #313338;
+            position: absolute;
+            top: -12px;
+            left: 8px;
+            padding: 0 4px;
+          }
+
+          .install {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            cursor: pointer;
+
+            .selector {
+              width: 14px;
+              height: 14px;
+              min-width: 14px;
+              min-height: 14px;
+
+              border-radius: 50%;
+
+              background-color: transparent;
+              border: 2px solid whitesmoke;
+              transition: background-color 0.1s ease-in-out;
+
+              &.selected {
+                background-color: whitesmoke;
+              }
+            }
+
+            &:not(.disabled):hover .selector {
+              background-color: rgba(245, 245, 245, 0.5);
+            }
+
+            &.disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+
+            .name {
+              font-size: 16px;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .about {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          position: relative;
+          width: 100%;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 8px;
+
+          .title {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+            background-color: #313338;
+            position: absolute;
+            top: -12px;
+            left: 8px;
+            padding: 0 4px;
+          }
+        }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="drag-bar">
+      <div class="title">
+        <img class="icon" draggable="false"
+          src="https://raw.githubusercontent.com/Rivercord/Resktop/main/static/icon.png" />
+        <div class="text">Rivercord Installer</div>
+      </div>
+
+      <div class="close">
+        <button @click="close">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor"
+              d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="app-content">
+      <div class="general-top">
+        <div class="discord-installs">
+          <div class="title"> Select Discord Version </div>
+          <div v-for="i in discordInstallations" :key="i.name" class="install" :class="{'disabled': !i.exists}"
+            @click="i.exists && (selectedInstallation = i)">
+            <div class="selector" :class="{'selected': selectedInstallation?.name === i.name}"></div>
+            <div class="name">
+              {{ i.name }}
+            </div>
+          </div>
+        </div>
+        <div class="about">
+          <div class="title">
+            About
+          </div>
+          <div class="text">
+            Select the Discord version you want to install on. You can access source codes from <a href=""></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.31/vue.global.min.js"></script>
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          discordInstallations: [
+            ["Discord", "Stable"],
+            ["DiscordPTB", "PTB"],
+            ["DiscordCanary", "Canary"],
+            ["DiscordDevelopment", "Development"]
+          ].map(i => {
+            const basePath = API.utils.joinPaths(API.paths.localAppData, i[0]);
+            return {
+              name: i[1],
+              path: basePath,
+              exists: API.utils.exists(basePath)
+            }
+          }),
+          selectedInstallation: null
+        }
+      },
+      mounted() {
+        this.selectedInstallation = this.discordInstallations.find(i => i.exists);
+      },
+      methods: {
+        close() {
+          window.close();
+        }
+      }
+    }).mount('#app');
+
+  </script>
+</body>
+
+</html>
