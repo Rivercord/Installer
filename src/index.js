@@ -35,6 +35,14 @@ function createWindow() {
     event.returnValue = path.join(...arg);
   });
 
+  ipcMain.on(":readdir", (event, arg) => {
+    try {
+      event.returnValue = fs.readdirSync(arg, { encoding: "utf-8" });
+    } catch (e) {
+      event.returnValue = [];
+    }
+  });
+
   win.loadFile(path.join(__dirname, "web/index.html"));
 }
 

@@ -7,9 +7,14 @@ contextBridge.exposeInMainWorld(
     utils: {
       joinPaths(...paths) {
         return ipcRenderer.sendSync(":joinPaths", paths);
-      },
+      }
+    },
+    fs: {
       exists(path) {
         return ipcRenderer.sendSync(":pathExists", path);
+      },
+      readdir(path) {
+        return ipcRenderer.sendSync(":readdir", path);
       }
     }
   }
