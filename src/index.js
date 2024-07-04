@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require("electron")
 const path = require("node:path");
-const fs = require("fs");
+const fs = require("original-fs");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -39,7 +39,51 @@ function createWindow() {
     try {
       event.returnValue = fs.readdirSync(arg, { encoding: "utf-8" });
     } catch (e) {
+      console.error(e);
       event.returnValue = [];
+    }
+  });
+
+  ipcMain.on(":writeFile", (event, arg) => {
+    try {
+      fs.writeFileSync(arg.path, arg.data, { encoding: "utf-8" });
+      event.returnValue = true;
+    } catch (e) {
+      console.error(e);
+      event.returnValue = false;
+    }
+  });
+
+  ipcMain.on(":rm", (event, arg) => {
+    try {
+      fs.rmSync(arg, { recursive: true });
+      event.returnValue = true;
+    } catch (e) {
+      console.error(e);
+      event.returnValue = false;
+    }
+  });
+
+  ipcMain.on(":rename", (event, arg) => {
+    try {
+      fs.renameSync(arg.oldPath, arg.newPath);
+      event.returnValue = true;
+    } catch (e) {
+      console.error(e);
+      event.returnValue = false;
+    }
+  });
+
+  ipcMain.on(":mkdir", (event, arg) => {
+    try {
+      if (fs.existsSync(arg)) {
+        event.returnValue = true;
+        return;
+      }
+      fs.mkdirSync(arg, { recursive: true });
+      event.returnValue = true;
+    } catch (e) {
+      event.returnValue = false;
     }
   });
 

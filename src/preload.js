@@ -1,4 +1,4 @@
-const { app, contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld(
   "API",
@@ -15,6 +15,18 @@ contextBridge.exposeInMainWorld(
       },
       readdir(path) {
         return ipcRenderer.sendSync(":readdir", path);
+      },
+      writeFile(path, data) {
+        return ipcRenderer.sendSync(":writeFile", { path, data });
+      },
+      rm(path) {
+        return ipcRenderer.sendSync(":rm", path);
+      },
+      rename(oldPath, newPath) {
+        return ipcRenderer.sendSync(":rename", { oldPath, newPath });
+      },
+      mkdir(path) {
+        return ipcRenderer.sendSync(":mkdir", path);
       }
     }
   }

@@ -217,7 +217,7 @@
           }
 
           &.small {
-            width: 75%;
+            width: 50%;
           }
 
           &.small-text {
@@ -245,7 +245,7 @@
       <div class="title">
         <img class="icon" draggable="false"
           src="https://raw.githubusercontent.com/Rivercord/Resktop/main/static/icon.png" />
-        <div class="text">Rivercord Installer</div>
+        <div class="text"> Rivercord Yükleyici </div>
       </div>
 
       <div class="close">
@@ -261,7 +261,7 @@
     <div class="app-content">
       <div class="general-top">
         <div class="discord-installs">
-          <div class="title"> Select Discord Version </div>
+          <div class="title"> Discord Versiyonu </div>
           <div 
             v-for="i in discordInstallations" 
             :key="i.name" class="install" 
@@ -276,23 +276,23 @@
         </div>
         <div class="about">
           <div class="title">
-            About
+            Hakkında
           </div>
           <div class="text">
-            Select the Discord version you want to install Rivercord on. And then press install.
+            Rivercord'u yüklemek istediğiniz Discord sürümünü seçin. Ve ardından yükleye basın.
           </div>
         </div>
       </div>
       <div class="controls-bottom">
         <div class="huge-button" :class="{'disabled': installing}" @click="!installing && install()">
-          {{ installing ? 'Installing...' : 'Install' }}
+          {{ installing ? 'Yükleniyor...' : 'Yükle' }}
         </div>
         <div 
           class="huge-button small" 
           :class="{'disabled': uninstalling || !selectedInstallation?.installed, 'small-text': !selectedInstallation?.installed}"
           @click="!(uninstalling || !selectedInstallation?.installed) && uninstall()"
         >
-          {{ !selectedInstallation?.installed ? "Not Installed" : uninstalling ? 'Uninstalling...' : 'Uninstall' }}
+          {{ !selectedInstallation?.installed ? "Yüklü Değil" : uninstalling ? 'Siliniyor...' : 'Sil' }}
         </div>
       </div>
     </div>
@@ -317,33 +317,44 @@
       return API.utils.joinPaths(basePath, newest, "resources");
     }
 
+    function getInstalls() {
+      return [
+        ["Discord", "Stable"],
+        ["DiscordPTB", "PTB"],
+        ["DiscordCanary", "Canary"],
+        ["DiscordDevelopment", "Development"]
+      ].map(i => {
+        const base = API.utils.joinPaths(API.paths.localAppData, i[0]);
+        const exists = API.fs.exists(base);
+        const resources = exists ? findResourcesDir(base) : null;
+        return {
+          name: i[1],
+          paths: {
+            base,
+            resources
+          },
+          exists,
+          installed:
+            !!(
+              resources 
+              && API.fs.exists(API.utils.joinPaths(resources, "app.asar", "index.js"))
+              && API.fs.exists(API.utils.joinPaths(resources, "_app.asar"))
+            )
+        }
+      });
+    }
+
+    const RIVERCORD_FILES = [
+      "patcher.js",
+      "preload.js",
+      "renderer.js",
+      "renderer.css",
+    ];
+
     Vue.createApp({
       data() {
         return {
-          discordInstallations: [
-            ["Discord", "Stable"],
-            ["DiscordPTB", "PTB"],
-            ["DiscordCanary", "Canary"],
-            ["DiscordDevelopment", "Development"]
-          ].map(i => {
-            const base = API.utils.joinPaths(API.paths.localAppData, i[0]);
-            const exists = API.fs.exists(base);
-            const resources = exists ? findResourcesDir(base) : null;
-            return {
-              name: i[1],
-              paths: {
-                base,
-                resources
-              },
-              exists,
-              installed:
-                !!(
-                  resources 
-                  && API.fs.exists(API.utils.joinPaths(resources, "app.asar", "index.js"))
-                  && API.fs.exists(API.utils.joinPaths(resources, "_app.asar"))
-                )
-            }
-          }),
+          discordInstallations: getInstalls(),
           selectedInstallation: null,
           installing: false,
           uninstalling: false
@@ -353,7 +364,7 @@
         console.log(this.discordInstallations);
         this.selectedInstallation = this.discordInstallations.find(i => i.exists);
         if (!this.selectedInstallation) {
-          alert("No Discord installation found. Please install Discord first.");
+          alert("Discord kurulu değil. Lütfen önce Discord'u kurun.");
           window.close();
           return;
         }
@@ -363,27 +374,82 @@
           window.close();
         },
         askQuit(type = "install") {
-          confirm(`${type === "install" ? "Installation done." : "Uninstall is done."} Do you want to quit?`) && this.close();
+          confirm(`${type === "install" ? "Yükleme tamamlandı." : "Silme tamamlandı."} Çıkılsın mı?`) && this.close();
         },
-        install() {
-          if (!this.selectedInstallation) {
-            alert("Please select a Discord version to install Rivercord on.");
+        async install() {
+          if (!this.selectedInstallation?.exists) {
+            alert("Lütfen Rivercord'u yüklemek için bir Discord sürümü seçin.");
             return;
           }
 
-          // TODO: implement installation
+          this.installing = true;
+          
+          if (this.selectedInstallation.installed) this.uninstall(true);
 
+          const { resources } = this.selectedInstallation.paths;
+
+          const distPath = API.utils.joinPaths(API.paths.appData, "Rivercord", "dist");
+
+          API.fs.mkdir(distPath);
+
+          await Promise.all(
+            RIVERCORD_FILES.map(
+              async (fileName) => {
+                const text = await fetch(`https://raw.githubusercontent.com/Rivercord/Rivercord/main/dist/${fileName}`).then((res) => res.text()).catch(() => null);
+                API.fs.writeFile(API.utils.joinPaths(distPath, fileName), text);
+              }
+            )
+          );
+            
+          const appAsarPath = API.utils.joinPaths(resources, "app.asar");
+          if (API.fs.exists(appAsarPath))
+            API.fs.rename(
+              appAsarPath,
+              API.utils.joinPaths(resources, "_app.asar")
+            );
+
+          API.fs.mkdir(appAsarPath);
+
+          API.fs.writeFile(
+            API.utils.joinPaths(appAsarPath, "index.js"),
+            `require("${API.utils.joinPaths(distPath, "patcher.js").replaceAll("\\", "\\\\")}");`
+          );
+
+          API.fs.writeFile(
+            API.utils.joinPaths(appAsarPath, "package.json"),
+            `{"name":"rivercord", "main":"index.js"}`
+          );
+
+          this.discordInstallations = getInstalls();
+
+          this.installing = false;
           this.askQuit("install");
         },
-        uninstall() {
-          if (!this.selectedInstallation) {
-            alert("Please select a Discord version to uninstall Rivercord from.");
+        uninstall(doNotAsk = false) {
+          if (!this.selectedInstallation?.exists) {
+            alert("Lütfen Rivercord'u silmek için bir Discord sürümü seçin.");
             return;
           }
 
-          // TODO: implement uninstall
+          const { resources } = this.selectedInstallation.paths;
 
-          this.askQuit("uninstall");
+          this.uninstalling = true;
+
+          if (API.fs.exists(API.utils.joinPaths(resources, "app.asar", "index.js"))) 
+            API.fs.rm(API.utils.joinPaths(resources, "app.asar"));
+
+
+          if (API.fs.exists(API.utils.joinPaths(resources, "_app.asar")))
+            API.fs.rename(
+              API.utils.joinPaths(resources, "_app.asar"),
+              API.utils.joinPaths(resources, "app.asar")
+            );
+
+          this.discordInstallations = getInstalls();
+
+          this.uninstalling = false;
+
+          if (!doNotAsk) this.askQuit("uninstall");
         }
       }
     }).mount('#app');

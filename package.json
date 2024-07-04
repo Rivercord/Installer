@@ -1,9 +1,43 @@
 {
 	"dependencies": {
-		"electron": "^31.1.0"
+		"original-fs": "^1.2.0"
 	},
 	"main": "src/index.js",
 	"scripts": {
-		"dev": "electron ."
+		"dev": "electron .",
+		"build:win": "electron-builder --windows portable --x64"
+	},
+	"author": "Kıraç Armağan Önal",
+	"description": "Rivercord yükleyici.",
+	"name": "rivercord-installer",
+	"version": "0.1.0",
+	"devDependencies": {
+		"electron": "^31.1.0",
+		"electron-builder": "^24.13.3"
+	},
+	"build": {
+		"appId": "app.rivercord.installer",
+		"productName": "Rivercord Yükleyici",
+		"files": [
+			"!*",
+			"src",
+			"static",
+			"package.json",
+			"LICENSE"
+		],
+		"icon": "static/icon.png",
+		"nsis": {
+			"oneClick": true,
+			"perMachine": false,
+			"allowToChangeInstallationDirectory": false,
+			"installerIcon": "static/icon.ico",
+			"createDesktopShortcut": true,
+			"createStartMenuShortcut": true
+		},
+		"win": {
+			"target": [
+				"portable"
+			]
+		}
 	}
 }
