@@ -376,6 +376,10 @@
         askQuit(type = "install") {
           confirm(`${type === "install" ? "Yükleme tamamlandı." : "Silme tamamlandı."} Çıkılsın mı?`) && this.close();
         },
+        updateInstalls() {
+          this.discordInstallations = getInstalls();
+          this.selectedInstallation = this.discordInstallations.find(i => i.name === this.selectedInstallation.name);
+        },
         async install() {
           if (!this.selectedInstallation?.exists) {
             alert("Lütfen Rivercord'u yüklemek için bir Discord sürümü seçin.");
@@ -420,7 +424,7 @@
             `{"name":"rivercord", "main":"index.js"}`
           );
 
-          this.discordInstallations = getInstalls();
+          this.updateInstalls();
 
           this.installing = false;
           this.askQuit("install");
@@ -445,8 +449,8 @@
               API.utils.joinPaths(resources, "app.asar")
             );
 
-          this.discordInstallations = getInstalls();
-
+          this.updateInstalls();
+          
           this.uninstalling = false;
 
           if (!doNotAsk) this.askQuit("uninstall");
