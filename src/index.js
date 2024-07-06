@@ -100,7 +100,7 @@ function createWindow() {
 
   ipcMain.on(":spawn", (event, arg) => {
     try {
-      cp.spawn(arg.command, arg.args, { shell: true, detached: true });
+      cp.spawn(arg.command, arg.args, arg.options);
       event.returnValue = true;
     } catch (e) {
       console.error(e);

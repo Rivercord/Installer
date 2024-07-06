@@ -391,7 +391,7 @@
 
           API.childProcess.exec(`taskkill /IM ${this.selectedInstallation.id}.exe /F`);
 
-          await new Promise((res) => setTimeout(res, 100));
+          await new Promise((res) => setTimeout(res, 250));
           
           if (this.selectedInstallation.installed) this.uninstall(true);
 
@@ -431,9 +431,17 @@
 
           this.updateInstalls();
           
-          await new Promise((res) => setTimeout(res, 100));
+          await new Promise((res) => setTimeout(res, 250));
 
-          API.childProcess.spawn(API.utils.joinPaths(resources, `../${this.selectedInstallation.id}.exe`), []);
+          API.childProcess.spawn(
+            API.utils.joinPaths(resources, `../../Update.exe`), 
+            [], 
+            { 
+              shell: true, 
+              detached: true,
+              cwd: API.utils.joinPaths(resources, `../../`)
+            }
+          );
 
           this.installing = false;
           this.askQuit("install");

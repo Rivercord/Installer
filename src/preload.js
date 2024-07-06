@@ -33,8 +33,8 @@ contextBridge.exposeInMainWorld(
       exec(command) {
         return ipcRenderer.sendSync(":exec", command);
       },
-      spawn(command, args = []) {
-        return ipcRenderer.sendSync(":spawn", { command, args });
+      spawn(command, args = [], options = {}) {
+        return ipcRenderer.sendSync(":spawn", { command, args, options });
       }
     }
   }
