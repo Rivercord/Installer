@@ -381,17 +381,6 @@
           this.discordInstallations = getInstalls();
           this.selectedInstallation = this.discordInstallations.find(i => i.name === this.selectedInstallation.name);
         },
-        spawnDiscord(resources) {
-          API.childProcess.spawn(
-            API.utils.joinPaths(resources, `../../Update.exe`), 
-            [], 
-            { 
-              shell: true, 
-              detached: true,
-              cwd: API.utils.joinPaths(resources, `../../`)
-            }
-          );
-        },
         async install() {
           if (!this.selectedInstallation?.exists) {
             alert("Lütfen Rivercord'u yüklemek için bir Discord sürümü seçin.");
@@ -440,10 +429,6 @@
           );
 
           this.updateInstalls();
-          
-          await new Promise((res) => setTimeout(res, 250));
-          this.spawnDiscord(resources);
-          await new Promise((res) => setTimeout(res, 250));
 
           this.installing = false;
           this.askQuit("install");
@@ -472,10 +457,6 @@
             );
 
           this.updateInstalls();
-          
-          await new Promise((res) => setTimeout(res, 250));
-          this.spawnDiscord(resources);
-          await new Promise((res) => setTimeout(res, 250));
 
           this.uninstalling = false;
 
