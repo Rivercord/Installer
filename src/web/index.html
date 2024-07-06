@@ -381,6 +381,17 @@
           this.discordInstallations = getInstalls();
           this.selectedInstallation = this.discordInstallations.find(i => i.name === this.selectedInstallation.name);
         },
+        spawnDiscord(resources) {
+          API.childProcess.spawn(
+            API.utils.joinPaths(resources, `../../Update.exe`), 
+            [], 
+            { 
+              shell: true, 
+              detached: true,
+              cwd: API.utils.joinPaths(resources, `../../`)
+            }
+          );
+        },
         async install() {
           if (!this.selectedInstallation?.exists) {
             alert("Lütfen Rivercord'u yüklemek için bir Discord sürümü seçin.");
@@ -390,7 +401,6 @@
           this.installing = true;
 
           API.childProcess.exec(`taskkill /IM ${this.selectedInstallation.id}.exe /F`);
-
           await new Promise((res) => setTimeout(res, 250));
           
           if (this.selectedInstallation.installed) this.uninstall(true);
@@ -432,30 +442,25 @@
           this.updateInstalls();
           
           await new Promise((res) => setTimeout(res, 250));
-
-          API.childProcess.spawn(
-            API.utils.joinPaths(resources, `../../Update.exe`), 
-            [], 
-            { 
-              shell: true, 
-              detached: true,
-              cwd: API.utils.joinPaths(resources, `../../`)
-            }
-          );
+          this.spawnDiscord(resources);
+          await new Promise((res) => setTimeout(res, 250));
 
           this.installing = false;
           this.askQuit("install");
         },
-        uninstall(doNotAsk = false) {
+        async uninstall(doNotAsk = false) {
           if (!this.selectedInstallation?.exists) {
             alert("Lütfen Rivercord'u silmek için bir Discord sürümü seçin.");
             return;
           }
 
           const { resources } = this.selectedInstallation.paths;
-
+          
           this.uninstalling = true;
 
+          API.childProcess.exec(`taskkill /IM ${this.selectedInstallation.id}.exe /F`);
+          await new Promise((res) => setTimeout(res, 250));
+          
           if (API.fs.exists(API.utils.joinPaths(resources, "app.asar", "index.js"))) 
             API.fs.rm(API.utils.joinPaths(resources, "app.asar"));
 
@@ -468,6 +473,10 @@
 
           this.updateInstalls();
           
+          await new Promise((res) => setTimeout(res, 250));
+          this.spawnDiscord(resources);
+          await new Promise((res) => setTimeout(res, 250));
+
           this.uninstalling = false;
 
           if (!doNotAsk) this.askQuit("uninstall");
