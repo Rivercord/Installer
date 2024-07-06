@@ -328,6 +328,7 @@
         const exists = API.fs.exists(base);
         const resources = exists ? findResourcesDir(base) : null;
         return {
+          id: i[0],
           name: i[1],
           paths: {
             base,
@@ -387,6 +388,10 @@
           }
 
           this.installing = true;
+
+          API.childProcess.exec(`taskkill /IM ${this.selectedInstallation.id}.exe /F`);
+
+          await new Promise((res) => setTimeout(res, 100));
           
           if (this.selectedInstallation.installed) this.uninstall(true);
 
@@ -425,6 +430,10 @@
           );
 
           this.updateInstalls();
+          
+          await new Promise((res) => setTimeout(res, 100));
+
+          API.childProcess.spawn(API.utils.joinPaths(resources, `../${this.selectedInstallation.id}.exe`), []);
 
           this.installing = false;
           this.askQuit("install");

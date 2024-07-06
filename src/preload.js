@@ -28,6 +28,14 @@ contextBridge.exposeInMainWorld(
       mkdir(path) {
         return ipcRenderer.sendSync(":mkdir", path);
       }
+    },
+    childProcess: {
+      exec(command) {
+        return ipcRenderer.sendSync(":exec", command);
+      },
+      spawn(command, args = []) {
+        return ipcRenderer.sendSync(":spawn", { command, args });
+      }
     }
   }
 );

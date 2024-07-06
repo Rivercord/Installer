@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron")
 const path = require("node:path");
 const fs = require("original-fs");
+const cp = require("child_process");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -83,6 +84,26 @@ function createWindow() {
       fs.mkdirSync(arg, { recursive: true });
       event.returnValue = true;
     } catch (e) {
+      event.returnValue = false;
+    }
+  });
+
+  ipcMain.on(":exec", (event, arg) => {
+    try {
+      cp.execSync(arg);
+      event.returnValue = true;
+    } catch (e) {
+      console.error(e);
+      event.returnValue = false;
+    }
+  });
+
+  ipcMain.on(":spawn", (event, arg) => {
+    try {
+      cp.spawn(arg.command, arg.args, { shell: true, detached: true });
+      event.returnValue = true;
+    } catch (e) {
+      console.error(e);
       event.returnValue = false;
     }
   });
