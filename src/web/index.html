@@ -300,6 +300,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.31/vue.global.min.js"></script>
   <script>
     function isNewerDir(newDir, oldDir) {
+      console.log(newDir, oldDir);
+      if (!newDir || !oldDir) return true;
       const newParts = newDir.split("app-")[1].split(".");
       const oldParts = oldDir.split("app-")[1].split(".");
       for (let i = 0; i < newParts.length; i++) {
@@ -313,7 +315,8 @@
 
     function findResourcesDir(basePath) {
       const filenames = API.fs.readdir(basePath);
-      const newest = filenames.filter((dir) => dir.startsWith("app-")).reduce((prev, current) => (isNewerDir(current, prev) ? current : prev));
+      const newest = filenames.filter((dir) => dir.startsWith("app-")).reduce((prev, current) => (isNewerDir(current, prev) ? current : prev), "");
+      if (!newest) return null;
       return API.utils.joinPaths(basePath, newest, "resources");
     }
 
@@ -324,22 +327,23 @@
         ["DiscordCanary", "Canary"],
         ["DiscordDevelopment", "Development"]
       ].map(i => {
-        const base = API.utils.joinPaths(API.paths.localAppData, i[0]);
-        const exists = API.fs.exists(base);
-        const resources = exists ? findResourcesDir(base) : null;
+        const baseDir = API.utils.joinPaths(API.paths.localAppData, i[0]);
+        const resourcesDir = findResourcesDir(baseDir);
+        const resourcesExists = resourcesDir && API.fs.exists(resourcesDir);
+        const exists = resourcesExists && API.fs.exists(baseDir);
         return {
           id: i[0],
           name: i[1],
           paths: {
-            base,
-            resources
+            base: baseDir,
+            resources: resourcesDir,
           },
           exists,
           installed:
             !!(
-              resources 
-              && API.fs.exists(API.utils.joinPaths(resources, "app.asar", "index.js"))
-              && API.fs.exists(API.utils.joinPaths(resources, "_app.asar"))
+              resourcesExists 
+              && API.fs.exists(API.utils.joinPaths(resourcesDir, "app.asar", "index.js"))
+              && API.fs.exists(API.utils.joinPaths(resourcesDir, "_app.asar"))
             )
         }
       });
